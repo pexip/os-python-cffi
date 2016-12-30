@@ -40,10 +40,6 @@ for pkg in ('python-cffi', 'python3-cffi'):
                 '{pkg}-backend-api-max (= {max}), '
                 '{pkg}-backend-api-{target}\n'.format(**subst))
     with open('debian/{0}.pydist'.format(pkg), 'w', encoding='UTF-8') as f:
-        f.write('cffi {pkg}-backend-api-{target}\n'.format(**subst))
-
-    # Disabled until we can use versioned provides (blocked by #786803)
-    # with open('debian/{0}.pydist'.format(pkg), 'w', encoding='UTF-8') as f:
-    #     f.write('cffi {pkg}-backend-api-min (<= {target}), '
-    #             '{pkg}-backend-api-max (>= {target})\n'
-    #             .format(**subst))
+        f.write('cffi {pkg}-backend-api-min (<= {target}), '
+                '{pkg}-backend-api-max (>= {target})\n'
+                .format(**subst))

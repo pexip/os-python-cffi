@@ -50,11 +50,7 @@ Package: python-cffi-backend
 Architecture: any
 Depends: ${misc:Depends}, ${python:Depends}, ${shlibs:Depends}
 Replaces: python-cffi (<< 1)
-Breaks:
- python-cffi (<< 1),
- python-cryptography (<< 0.8.2-4~),
- python-ssdeep (<< 3.1+dfsg-1+b1~),
- snimpy (<< 0.8.6-1+b1~)
+Breaks: python-cffi (<< 1)
 Provides: ${cffi:Provides}
 Description: Foreign Function Interface for Python calling C code - backend
  Convenient and reliable way of calling C code from Python.
@@ -95,9 +91,6 @@ Depends:
  ${misc:Depends},
  ${python3:Depends}
 Suggests: python3-dev
-Breaks:
- python3-cryptography (<< 0.8.2-4~),
- python3-ssdeep (<< 3.1+dfsg-1+b1~)
 Description: Foreign Function Interface for Python 3 calling C code
  Convenient and reliable way of calling C code from Python 3.
  .
