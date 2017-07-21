@@ -28,7 +28,7 @@ Vcs-Browser: http://anonscm.debian.org/viewvc/python-modules/packages/python-cff
 X-Python-Version: >= 2.6
 X-Python3-Version: >= 3.1
 XS-Testsuite: autopkgtest
-XS-Pexip-Upstream: http://ftp.debian.org/debian/ jessie
+XS-Pexip-Upstream: http://ftp.debian.org/debian/ jessie-backports
 
 Package: python-cffi
 Architecture: any
