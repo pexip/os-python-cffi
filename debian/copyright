@@ -4,8 +4,8 @@ Upstream-Contact: Armin Rigo
 Source: http://pypi.python.org/pypi/cffi/
 
 Files: *
-Copyright: 2012-2014, Armin Rigo
-           2012-2014, Maciej Fijalkowski
+Copyright: 2012-2016, Armin Rigo
+           2012-2013, Maciej Fijalkowski
 License: Expat
 
 Files: c/libffi_msvc/*
@@ -17,7 +17,7 @@ Copyright: 1996-2003, Red Hat, Inc.
 License: Expat
 
 Files: debian/*
-Copyright: 2012-2014, Stefano Rivera <stefanor@debian.org>
+Copyright: 2012-2016, Stefano Rivera <stefanor@debian.org>
 License: Expat
 
 License: Expat
