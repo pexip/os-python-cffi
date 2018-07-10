@@ -1,3 +1,9 @@
+python-cffi (1.9.1-2pexip1) pexip; urgency=medium
+
+  * Migrate to Stretch
+
+ -- John-Mark Bell <jmb@pexip.com>  Tue, 10 Jul 2018 00:20:09 +0000
+
 python-cffi (1.9.1-2~bpo8+1pexip1) pexip; urgency=low
 
   * Migrate to jessie-backports
