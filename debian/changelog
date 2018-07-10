@@ -4,14 +4,6 @@ python-cffi (1.9.1-2~bpo8+1pexip1) pexip; urgency=low
 
  -- John-Mark Bell <jmb@pexip.com>  Fri, 20 Jul 2017 17:51:47 +0100
 
-python-cffi (1.9.1-2~bpo8+1) jessie-backports; urgency=medium
-
-  * Rebuild for jessie-backports, carrying this change from 1.4.2-2~bpo8+1:
-    - Breaks: Packages in jessie that aren't compatible with cffi 1.0.
-  * Don't generate versioned Provides, dpkg isn't ready for them yet.
-
- -- Stefano Rivera <stefanor@debian.org>  Tue, 23 May 2017 17:19:24 -0700
-
 python-cffi (1.9.1-2) unstable; urgency=medium
 
   * Patch kfreebsd-mtime-resolution: Explicitly flush import cache after
@@ -62,15 +54,6 @@ python-cffi (1.5.0-1) unstable; urgency=medium
   * Bump copyright years.
 
  -- Stefano Rivera <stefanor@debian.org>  Sun, 17 Jan 2016 11:03:41 -0800
-
-python-cffi (1.4.2-2~bpo8+1) jessie-backports; urgency=medium
-
-  * Rebuild for jessie-backports.
-  * pybuild --ext-dest-dir is buggy before 1.20150628-1, so move
-    extensions manually in debian/rules.
-  * Breaks: Packages in jessie that aren't compatible with cffi 1.0
-
- -- Stefano Rivera <stefanor@debian.org>  Mon, 18 Jan 2016 11:28:44 -0800
 
 python-cffi (1.4.2-2) unstable; urgency=medium
 
