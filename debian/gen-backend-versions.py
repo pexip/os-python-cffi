@@ -6,7 +6,7 @@ import re
 def target_version():
     with open('cffi/recompiler.py', encoding='UTF-8') as f:
         for line in f:
-            m = re.match(r'^VERSION = "(0x[0-9A-F]+)"$', line)
+            m = re.match(r'^VERSION_BASE = (0x[0-9A-F]+)$', line)
             if m:
                 return int(m.group(1), 16)
     raise Exception('Version not found')

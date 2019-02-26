@@ -2,8 +2,9 @@
 #include "parse_c_type.c"
 #include "realize_c_type.c"
 
-#define CFFI_VERSION_MIN    0x2601
-#define CFFI_VERSION_MAX    0x27FF
+#define CFFI_VERSION_MIN            0x2601
+#define CFFI_VERSION_CHAR16CHAR32   0x2801
+#define CFFI_VERSION_MAX            0x28FF
 
 typedef struct FFIObject_s FFIObject;
 typedef struct LibObject_s LibObject;
@@ -44,6 +45,9 @@ static int init_ffi_lib(PyObject *m)
             return -1;
         if (PyDict_SetItemString(FFI_Type.tp_dict, "CData",
                                  (PyObject *)&CData_Type) < 0)
+            return -1;
+        if (PyDict_SetItemString(FFI_Type.tp_dict, "buffer",
+                                 (PyObject *)&MiniBuffer_Type) < 0)
             return -1;
 
         for (i = 0; all_dlopen_flags[i].name != NULL; i++) {
@@ -180,6 +184,8 @@ static PyObject *b_init_cffi_1_0_external_module(PyObject *self, PyObject *arg)
     num_exports = 25;
     if (ctx->flags & 1)    /* set to mean that 'extern "Python"' is used */
         num_exports = 26;
+    if (version >= CFFI_VERSION_CHAR16CHAR32)
+        num_exports = 28;
     memcpy(exports, (char *)cffi_exports, num_exports * sizeof(void *));
 
     /* make the module object */

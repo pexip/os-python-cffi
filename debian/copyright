@@ -1,10 +1,10 @@
-Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: CFFI
 Upstream-Contact: Armin Rigo
 Source: http://pypi.python.org/pypi/cffi/
 
 Files: *
-Copyright: 2012-2016, Armin Rigo
+Copyright: 2012-2019, Armin Rigo
            2012-2013, Maciej Fijalkowski
 License: Expat
 
@@ -17,7 +17,7 @@ Copyright: 1996-2003, Red Hat, Inc.
 License: Expat
 
 Files: debian/*
-Copyright: 2012-2016, Stefano Rivera <stefanor@debian.org>
+Copyright: 2012-2019, Stefano Rivera <stefanor@debian.org>
 License: Expat
 
 License: Expat
