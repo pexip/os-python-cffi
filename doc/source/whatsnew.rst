@@ -3,8 +3,285 @@ What's New
 ======================
 
 
+v1.12.2
+=======
+
+* Added temporary workaround to compile on CPython 3.8.0a2.
+
+
+v1.12.1
+=======
+
+* CPython 3 on Windows: we again no longer compile with ``Py_LIMITED_API``
+  by default because such modules *still* cannot be used with virtualenv.
+  The problem is that it doesn't work in CPython <= 3.4, and for
+  technical reason we can't enable this flag automatically based on the
+  version of Python.
+
+  Like before, `Issue #350`_ mentions a workaround if you still want
+  the ``Py_LIMITED_API`` flag and *either* you are not concerned about
+  virtualenv *or* you are sure your module will not be used on CPython
+  <= 3.4: pass ``define_macros=[("Py_LIMITED_API", None)]`` to the
+  ``ffibuilder.set_source()`` call.
+
+
+v1.12
+=====
+
+* `Direct support for pkg-config`__.
+
+* ``ffi.from_buffer()`` takes a new optional *first* argument that gives
+  the array type of the result.  It also takes an optional keyword argument
+  ``require_writable`` to refuse read-only Python buffers.
+
+* ``ffi.new()``, ``ffi.gc()`` or ``ffi.from_buffer()`` cdata objects
+  can now be released at known times, either by using the ``with``
+  keyword or by calling the new ``ffi.release()``.
+
+* Windows, CPython 3.x: cffi modules are linked with ``python3.dll``
+  again.  This makes them independant on the exact CPython version,
+  like they are on other platforms.  **It requires virtualenv 16.0.0.**
+
+* Accept an expression like ``ffi.new("int[4]", p)`` if ``p`` is itself
+  another cdata ``int[4]``.
+
+* CPython 2.x: ``ffi.dlopen()`` failed with non-ascii file names on Posix
+
+* CPython: if a thread is started from C and then runs Python code (with
+  callbacks or with the embedding solution), then previous versions of
+  cffi would contain possible crashes and/or memory leaks.  Hopefully,
+  this has been fixed (see `issue #362`_).
+
+* Support for ``ffi.cdef(..., pack=N)`` where N is a power of two.
+  Means to emulate ``#pragma pack(N)`` on MSVC.  Also, the default on
+  Windows is now ``pack=8``, like on MSVC.  This might make a difference
+  in corner cases, although I can't think of one in the context of CFFI.
+  The old way ``ffi.cdef(..., packed=True)`` remains and is equivalent
+  to ``pack=1`` (saying e.g. that fields like ``int`` should be aligned
+  to 1 byte instead of 4).
+
+.. __: cdef.html#pkgconfig
+.. _`issue #362`: https://bitbucket.org/cffi/cffi/issues/362/
+
+
+Older Versions
+==============
+
+v1.11.5
+-------
+
+* `Issue #357`_: fix ``ffi.emit_python_code()`` which generated a buggy
+  Python file if you are using a ``struct`` with an anonymous ``union``
+  field or vice-versa.
+
+* Windows: ``ffi.dlopen()`` should now handle unicode filenames.
+
+* ABI mode: implemented ``ffi.dlclose()`` for the in-line case (it used
+  to be present only in the out-of-line case).
+
+* Fixed a corner case for ``setup.py install --record=xx --root=yy``
+  with an out-of-line ABI module.  Also fixed `Issue #345`_.
+
+* More hacks on Windows for running CFFI's own ``setup.py``.
+
+* `Issue #358`_: in embedding, to protect against (the rare case of)
+  Python initialization from several threads in parallel, we have to use
+  a spin-lock.  On CPython 3 it is worse because it might spin-lock for
+  a long time (execution of ``Py_InitializeEx()``).  Sadly, recent
+  changes to CPython make that solution needed on CPython 2 too.
+
+* CPython 3 on Windows: we no longer compile with ``Py_LIMITED_API``
+  by default because such modules cannot be used with virtualenv.
+  `Issue #350`_ mentions a workaround if you still want that and are not
+  concerned about virtualenv: pass a ``define_macros=[("Py_LIMITED_API",
+  None)]`` to the ``ffibuilder.set_source()`` call.
+
+.. _`Issue #345`: https://bitbucket.org/cffi/cffi/issues/345/
+.. _`Issue #350`: https://bitbucket.org/cffi/cffi/issues/350/
+.. _`Issue #358`: https://bitbucket.org/cffi/cffi/issues/358/
+.. _`Issue #357`: https://bitbucket.org/cffi/cffi/issues/357/
+
+
+v1.11.4
+-------
+
+* Windows: reverted linking with ``python3.dll``, because
+  virtualenv does not make this DLL available to virtual environments
+  for now.  See `Issue #355`_.  On Windows only, the C extension
+  modules created by cffi follow for now the standard naming scheme
+  ``foo.cp36-win32.pyd``, to make it clear that they are regular
+  CPython modules depending on ``python36.dll``.
+
+.. _`Issue #355`: https://bitbucket.org/cffi/cffi/issues/355/
+
+
+v1.11.3
+-------
+
+* Fix on CPython 3.x: reading the attributes ``__loader__`` or
+  ``__spec__`` from the cffi-generated lib modules gave a buggy
+  SystemError.  (These attributes are always None, and provided only to
+  help compatibility with tools that expect them in all modules.)
+
+* More Windows fixes: workaround for MSVC not supporting large
+  literal strings in C code (from
+  ``ffi.embedding_init_code(large_string)``); and an issue with
+  ``Py_LIMITED_API`` linking with ``python35.dll/python36.dll`` instead
+  of ``python3.dll``.
+
+* Small documentation improvements.
+
+
+v1.11.2
+-------
+
+* Fix Windows issue with managing the thread-state on CPython 3.0 to 3.5
+
+
+v1.11.1
+-------
+
+* Fix tests, remove deprecated C API usage
+
+* Fix (hack) for 3.6.0/3.6.1/3.6.2 giving incompatible binary extensions
+  (cpython issue `#29943`_)
+
+* Fix for 3.7.0a1+
+
+.. _`#29943`: https://bugs.python.org/issue29943
+
+
+v1.11
+-----
+
+* Support the modern standard types ``char16_t`` and ``char32_t``.
+  These work like ``wchar_t``: they represent one unicode character, or
+  when used as ``charN_t *`` or ``charN_t[]`` they represent a unicode
+  string.  The difference with ``wchar_t`` is that they have a known,
+  fixed size.  They should work at all places that used to work with
+  ``wchar_t`` (please report an issue if I missed something).  Note
+  that with ``set_source()``, you need to make sure that these types are
+  actually defined by the C source you provide (if used in ``cdef()``).
+
+* Support the C99 types ``float _Complex`` and ``double _Complex``.
+  Note that libffi doesn't support them, which means that in the ABI
+  mode you still cannot call C functions that take complex numbers
+  directly as arguments or return type.
+
+* Fixed a rare race condition when creating multiple ``FFI`` instances
+  from multiple threads.  (Note that you aren't meant to create many
+  ``FFI`` instances: in inline mode, you should write ``ffi =
+  cffi.FFI()`` at module level just after ``import cffi``; and in
+  out-of-line mode you don't instantiate ``FFI`` explicitly at all.)
+
+* Windows: using callbacks can be messy because the CFFI internal error
+  messages show up to stderr---but stderr goes nowhere in many
+  applications.  This makes it particularly hard to get started with the
+  embedding mode.  (Once you get started, you can at least use
+  ``@ffi.def_extern(onerror=...)`` and send the error logs where it
+  makes sense for your application, or record them in log files, and so
+  on.)  So what is new in CFFI is that now, on Windows CFFI will try to
+  open a non-modal MessageBox (in addition to sending raw messages to
+  stderr).  The MessageBox is only visible if the process stays alive:
+  typically, console applications that crash close immediately, but that
+  is also the situation where stderr should be visible anyway.
+
+* Progress on support for `callbacks in NetBSD`__.
+
+* Functions returning booleans would in some case still return 0 or 1
+  instead of False or True.  Fixed.
+
+* `ffi.gc()`__ now takes an optional third parameter, which gives an
+  estimate of the size (in bytes) of the object.  So far, this is only
+  used by PyPy, to make the next GC occur more quickly (`issue #320`__).
+  In the future, this might have an effect on CPython too (provided
+  the CPython `issue 31105`__ is addressed).
+
+* Add a note to the documentation: the ABI mode gives function objects
+  that are *slower* to call than the API mode does.  For some reason it
+  is often thought to be faster.  It is not!
+
+.. __: https://bitbucket.org/cffi/cffi/issues/321/cffi-191-segmentation-fault-during-self
+.. __: ref.html#ffi-gc
+.. __: https://bitbucket.org/cffi/cffi/issues/320/improve-memory_pressure-management
+.. __: http://bugs.python.org/issue31105
+
+
+v1.10.1
+-------
+
+(only released inside PyPy 5.8.0)
+
+* Fixed the line numbers reported in case of ``cdef()`` errors.
+  Also, I just noticed, but pycparser always supported the preprocessor
+  directive ``# 42 "foo.h"`` to mean "from the next line, we're in file
+  foo.h starting from line 42", which it puts in the error messages.
+
+
+v1.10
+-----
+
+* Issue #295: use calloc() directly instead of
+  PyObject_Malloc()+memset() to handle ffi.new() with a default
+  allocator.  Speeds up ``ffi.new(large-array)`` where most of the time
+  you never touch most of the array.
+
+* Some OS/X build fixes ("only with Xcode but without CLT").
+
+* Improve a couple of error messages: when getting mismatched versions
+  of cffi and its backend; and when calling functions which cannot be
+  called with libffi because an argument is a struct that is "too
+  complicated" (and not a struct *pointer*, which always works).
+
+* Add support for some unusual compilers (non-msvc, non-gcc, non-icc,
+  non-clang)
+
+* Implemented the remaining cases for ``ffi.from_buffer``.  Now all
+  buffer/memoryview objects can be passed.  The one remaining check is
+  against passing unicode strings in Python 2.  (They support the buffer
+  interface, but that gives the raw bytes behind the UTF16/UCS4 storage,
+  which is most of the times not what you expect.  In Python 3 this has
+  been fixed and the unicode strings don't support the memoryview
+  interface any more.)
+
+* The C type ``_Bool`` or ``bool`` now converts to a Python boolean
+  when reading, instead of the content of the byte as an integer.  The
+  potential incompatibility here is what occurs if the byte contains a
+  value different from 0 and 1.  Previously, it would just return it;
+  with this change, CFFI raises an exception in this case.  But this
+  case means "undefined behavior" in C; if you really have to interface
+  with a library relying on this, don't use ``bool`` in the CFFI side.
+  Also, it is still valid to use a byte string as initializer for a
+  ``bool[]``, but now it must only contain ``\x00`` or ``\x01``.  As an
+  aside, ``ffi.string()`` no longer works on ``bool[]`` (but it never
+  made much sense, as this function stops at the first zero).
+
+* ``ffi.buffer`` is now the name of cffi's buffer type, and
+  ``ffi.buffer()`` works like before but is the constructor of that type.
+
+* ``ffi.addressof(lib, "name")``  now works also in in-line mode, not
+  only in out-of-line mode.  This is useful for taking the address of
+  global variables.
+
+* Issue #255: ``cdata`` objects of a primitive type (integers, floats,
+  char) are now compared and ordered by value.  For example, ``<cdata
+  'int' 42>`` compares equal to ``42`` and ``<cdata 'char' b'A'>``
+  compares equal to ``b'A'``.  Unlike C, ``<cdata 'int' -1>`` does not
+  compare equal to ``ffi.cast("unsigned int", -1)``: it compares
+  smaller, because ``-1 < 4294967295``.
+
+* PyPy: ``ffi.new()`` and ``ffi.new_allocator()()`` did not record
+  "memory pressure", causing the GC to run too infrequently if you call
+  ``ffi.new()`` very often and/or with large arrays.  Fixed in PyPy 5.7.
+
+* Support in ``ffi.cdef()`` for numeric expressions with ``+`` or
+  ``-``.  Assumes that there is no overflow; it should be fixed first
+  before we add more general support for arbitrary arithmetic on
+  constants.
+
+
 v1.9
-====
+----
 
 * Structs with variable-sized arrays as their last field: now we track
   the length of the array after ``ffi.new()`` is called, just like we
@@ -39,7 +316,7 @@ v1.9
 
 
 v1.8.3
-======
+------
 
 * When passing a ``void *`` argument to a function with a different
   pointer type, or vice-versa, the cast occurs automatically, like in C.
@@ -52,7 +329,7 @@ v1.8.3
 
 
 v1.8.2
-======
+------
 
 * Issue #283: fixed ``ffi.new()`` on structures/unions with nested
   anonymous structures/unions, when there is at least one union in
@@ -61,7 +338,7 @@ v1.8.2
 
 
 v1.8.1
-======
+------
 
 * CPython 3.x: experimental: the generated C extension modules now use
   the "limited API", which means that, as a compiled .so/.dll, it should
@@ -76,7 +353,7 @@ v1.8.1
 
 
 v1.8
-====
+----
 
 * Removed the restriction that ``ffi.from_buffer()`` cannot be used on
   byte strings.  Now you can get a ``char *`` out of a byte string,
@@ -90,7 +367,7 @@ v1.8
 
 
 v1.7
-====
+----
 
 * ``ffi.gc(p, None)`` removes the destructor on an object previously
   created by another call to ``ffi.gc()``
@@ -119,7 +396,7 @@ v1.7
 
 
 v1.6
-====
+----
 
 * `ffi.list_types()`_
 
@@ -142,13 +419,13 @@ v1.6
 
 
 v1.5.2
-======
+------
 
 * Fix 1.5.1 for Python 2.6.
 
 
 v1.5.1
-======
+------
 
 * A few installation-time tweaks (thanks Stefano!)
 
@@ -160,7 +437,7 @@ v1.5.1
 
 
 v1.5.0
-======
+------
 
 * Support for `using CFFI for embedding`__.
 
@@ -168,13 +445,13 @@ v1.5.0
 
 
 v1.4.2
-======
+------
 
 Nothing changed from v1.4.1.
 
 
 v1.4.1
-======
+------
 
 * Fix the compilation failure of cffi on CPython 3.5.0.  (3.5.1 works;
   some detail changed that makes some underscore-starting macros
@@ -184,7 +461,7 @@ v1.4.1
 
 
 v1.4.0
-======
+------
 
 * A `better way to do callbacks`__ has been added (faster and more
   portable, and usually cleaner).  It is a mechanism for the
@@ -225,7 +502,7 @@ v1.4.0
 
 
 v1.3.1
-======
+------
 
 * The optional typedefs (``bool``, ``FILE`` and all Windows types) were
   not always available from out-of-line FFI objects.
@@ -241,7 +518,7 @@ v1.3.1
 
 
 v1.3.0
-======
+------
 
 * Added `ffi.memmove()`_.
 
@@ -276,13 +553,13 @@ v1.3.0
 
 
 v1.2.1
-======
+------
 
 Nothing changed from v1.2.0.
 
 
 v1.2.0
-======
+------
 
 * Out-of-line mode: ``int a[][...];`` can be used to declare a structure
   field or global variable which is, simultaneously, of total length
@@ -335,14 +612,14 @@ v1.2.0
 
 
 v1.1.2
-======
+------
 
 * ``ffi.gc()``: fixed a race condition in multithreaded programs
   introduced in 1.1.1
 
 
 v1.1.1
-======
+------
 
 * Out-of-line mode: ``ffi.string()``, ``ffi.buffer()`` and
   ``ffi.getwinerror()`` didn't accept their arguments as keyword
@@ -360,7 +637,7 @@ v1.1.1
 
 
 v1.1.0
-======
+------
 
 * Out-of-line API mode: we can now declare integer types with
   ``typedef int... foo_t;``.  The exact size and signedness of ``foo_t``
@@ -393,13 +670,13 @@ v1.1.0
 
 
 v1.0.3
-======
+------
 
 * Same as 1.0.2, apart from doc and test fixes on some platforms.
 
 
 v1.0.2
-======
+------
 
 * Variadic C functions (ending in a "..." argument) were not supported
   in the out-of-line ABI mode.  This was a bug---there was even a
@@ -409,7 +686,7 @@ v1.0.2
 
 
 v1.0.1
-======
+------
 
 * ``ffi.set_source()`` crashed if passed a ``sources=[..]`` argument.
   Fixed by chrippa on pull request #60.
@@ -422,7 +699,7 @@ v1.0.1
 
 
 v1.0.0
-======
+------
 
 * The main news item is out-of-line module generation:
 

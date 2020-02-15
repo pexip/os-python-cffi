@@ -2,6 +2,10 @@ import sys, os
 import subprocess
 import errno
 
+# on Windows we give up and always import setuptools early to fix things for us
+if sys.platform == "win32":
+    import setuptools
+
 
 sources = ['c/_cffi_backend.c']
 libraries = ['ffi']
@@ -42,14 +46,23 @@ def _ask_pkg_config(resultlist, option, result_prefix='', sysroot=False):
             #
             resultlist[:] = res
 
+no_compiler_found = False
 def no_working_compiler_found():
     sys.stderr.write("""
-    No working compiler found, or bogus compiler options
-    passed to the compiler from Python's distutils module.
-    See the error messages above.
-    (If they are about -mno-fused-madd and you are on OS/X 10.8,
-    see http://stackoverflow.com/questions/22313407/ .)\n""")
-    sys.exit(1)
+    No working compiler found, or bogus compiler options passed to
+    the compiler from Python's standard "distutils" module.  See
+    the error messages above.  Likely, the problem is not related
+    to CFFI but generic to the setup.py of any Python package that
+    tries to compile C code.  (Hints: on OS/X 10.8, for errors about
+    -mno-fused-madd see http://stackoverflow.com/questions/22313407/
+    Otherwise, see https://wiki.python.org/moin/CompLangPython or
+    the IRC channel #python on irc.freenode.net.)
+
+    Trying to continue anyway.  If you are trying to install CFFI from
+    a build done in a different context, you can ignore this warning.
+    \n""")
+    global no_compiler_found
+    no_compiler_found = True
 
 def get_config():
     from distutils.core import Distribution
@@ -68,8 +81,24 @@ def ask_supports_thread():
         ok1 = config.try_compile('int some_regular_variable_42;')
         if not ok1:
             no_working_compiler_found()
-        sys.stderr.write("Note: will not use '__thread' in the C code\n")
-        sys.stderr.write("The above error message can be safely ignored\n")
+        else:
+            sys.stderr.write("Note: will not use '__thread' in the C code\n")
+            _safe_to_ignore()
+
+def ask_supports_sync_synchronize():
+    if sys.platform == 'win32' or no_compiler_found:
+        return
+    config = get_config()
+    ok = config.try_link('int main(void) { __sync_synchronize(); return 0; }')
+    if ok:
+        define_macros.append(('HAVE_SYNC_SYNCHRONIZE', None))
+    else:
+        sys.stderr.write("Note: will not use '__sync_synchronize()'"
+                         " in the C code\n")
+        _safe_to_ignore()
+
+def _safe_to_ignore():
+    sys.stderr.write("***** The above error message can be safely ignored.\n\n")
 
 def uses_msvc():
     config = get_config()
@@ -118,9 +147,25 @@ if COMPILE_LIBFFI:
 else:
     use_pkg_config()
     ask_supports_thread()
+    ask_supports_sync_synchronize()
 
 if 'freebsd' in sys.platform:
     include_dirs.append('/usr/local/include')
+    library_dirs.append('/usr/local/lib')
+
+if 'darwin' in sys.platform:
+    try:
+        p = subprocess.Popen(['xcrun', '--show-sdk-path'],
+                             stdout=subprocess.PIPE)
+    except OSError as e:
+        if e.errno not in [errno.ENOENT, errno.EACCES]:
+            raise
+    else:
+        t = p.stdout.read().decode().strip()
+        p.stdout.close()
+        if p.wait() == 0:
+            include_dirs.append(t + '/usr/include/ffi')
+
 
 
 if __name__ == '__main__':
@@ -153,10 +198,10 @@ Contact
 
 `Mailing list <https://groups.google.com/forum/#!forum/python-cffi>`_
 """,
-        version='1.9.1',
+        version='1.12.2',
         packages=['cffi'] if cpython else [],
         package_data={'cffi': ['_cffi_include.h', 'parse_c_type.h', 
-                               '_embedding.h']}
+                               '_embedding.h', '_cffi_errors.h']}
                      if cpython else {},
         zip_safe=False,
 
@@ -179,14 +224,14 @@ Contact
         )] if cpython else [],
 
         install_requires=[
-            'pycparser',
+            'pycparser' if sys.version_info >= (2, 7) else 'pycparser<2.19',
         ] if cpython else [],
 
         entry_points = {
             "distutils.setup_keywords": [
                 "cffi_modules = cffi.setuptools_ext:cffi_modules",
             ],
-        } if cpython else {},
+        },
 
         classifiers=[
             'Programming Language :: Python',
@@ -198,6 +243,7 @@ Contact
             'Programming Language :: Python :: 3.3',
             'Programming Language :: Python :: 3.4',
             'Programming Language :: Python :: 3.5',
+            'Programming Language :: Python :: 3.6',
             'Programming Language :: Python :: Implementation :: CPython',
             'Programming Language :: Python :: Implementation :: PyPy',
         ],

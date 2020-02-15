@@ -233,15 +233,38 @@ def test_ffi_buffer():
     a = ffi.new("signed char[]", [5, 6, 7])
     assert ffi.buffer(a)[:] == b'\x05\x06\x07'
     assert ffi.buffer(cdata=a, size=2)[:] == b'\x05\x06'
+    assert type(ffi.buffer(a)) is ffi.buffer
 
 def test_ffi_from_buffer():
     import array
     ffi = _cffi1_backend.FFI()
-    a = array.array('H', [10000, 20000, 30000])
+    a = array.array('H', [10000, 20000, 30000, 40000])
     c = ffi.from_buffer(a)
     assert ffi.typeof(c) is ffi.typeof("char[]")
+    assert len(c) == 8
     ffi.cast("unsigned short *", c)[1] += 500
-    assert list(a) == [10000, 20500, 30000]
+    assert list(a) == [10000, 20500, 30000, 40000]
+    py.test.raises(TypeError, ffi.from_buffer, a, True)
+    assert c == ffi.from_buffer("char[]", a, True)
+    assert c == ffi.from_buffer(a, require_writable=True)
+    #
+    c = ffi.from_buffer("unsigned short[]", a)
+    assert len(c) == 4
+    assert c[1] == 20500
+    #
+    c = ffi.from_buffer("unsigned short[2][2]", a)
+    assert len(c) == 2
+    assert len(c[0]) == 2
+    assert c[0][1] == 20500
+    #
+    p = ffi.from_buffer(b"abcd")
+    assert p[2] == b"c"
+    #
+    assert p == ffi.from_buffer(b"abcd", require_writable=False)
+    py.test.raises((TypeError, BufferError), ffi.from_buffer,
+                                             "char[]", b"abcd", True)
+    py.test.raises((TypeError, BufferError), ffi.from_buffer, b"abcd",
+                                             require_writable=True)
 
 def test_memmove():
     ffi = _cffi1_backend.FFI()
@@ -360,7 +383,8 @@ def test_ffi_new_allocator_2():
         retries += 1
         assert retries <= 5
         import gc; gc.collect()
-    assert seen == [40, 40, raw1, raw2]
+    assert (seen == [40, 40, raw1, raw2] or
+            seen == [40, 40, raw2, raw1])
     assert repr(seen[2]) == "<cdata 'char[]' owning 41 bytes>"
     assert repr(seen[3]) == "<cdata 'char[]' owning 41 bytes>"
 

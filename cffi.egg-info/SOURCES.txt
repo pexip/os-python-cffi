@@ -1,6 +1,8 @@
 AUTHORS
 LICENSE
 MANIFEST.in
+README.md
+setup.cfg
 setup.py
 setup_base.py
 c/_cffi_backend.c
@@ -21,6 +23,7 @@ c/parse_c_type.c
 c/realize_c_type.c
 c/test_c.py
 c/wchar_helper.h
+c/wchar_helper_3.h
 c/libffi_msvc/ffi.c
 c/libffi_msvc/ffi.h
 c/libffi_msvc/ffi_common.h
@@ -32,6 +35,7 @@ c/libffi_msvc/win32.c
 c/libffi_msvc/win64.asm
 c/libffi_msvc/win64.obj
 cffi/__init__.py
+cffi/_cffi_errors.h
 cffi/_cffi_include.h
 cffi/_embedding.h
 cffi/api.py
@@ -39,10 +43,12 @@ cffi/backend_ctypes.py
 cffi/cffi_opcode.py
 cffi/commontypes.py
 cffi/cparser.py
+cffi/error.py
 cffi/ffiplatform.py
 cffi/lock.py
 cffi/model.py
 cffi/parse_c_type.h
+cffi/pkgconfig.py
 cffi/recompiler.py
 cffi/setuptools_ext.py
 cffi/vengine_cpy.py
@@ -99,6 +105,7 @@ doc/misc/parse_c_type.rst
 doc/source/cdef.rst
 doc/source/conf.py
 doc/source/embedding.rst
+doc/source/goals.rst
 doc/source/index.rst
 doc/source/installation.rst
 doc/source/overview.rst
@@ -149,6 +156,7 @@ testing/cffi1/test_dlopen_unicode_literals.py
 testing/cffi1/test_ffi_obj.py
 testing/cffi1/test_new_ffi_1.py
 testing/cffi1/test_parse_c_type.py
+testing/cffi1/test_pkgconfig.py
 testing/cffi1/test_re_python.py
 testing/cffi1/test_realize_c_type.py
 testing/cffi1/test_recompiler.py
@@ -164,6 +172,7 @@ testing/embedding/add3.py
 testing/embedding/add_recursive-test.c
 testing/embedding/add_recursive.py
 testing/embedding/empty.py
+testing/embedding/initerror.py
 testing/embedding/perf-test.c
 testing/embedding/perf.py
 testing/embedding/test_basic.py
