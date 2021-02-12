@@ -1,3 +1,104 @@
+python-cffi (1.14.5-1) unstable; urgency=medium
+
+  * New upstream release.
+  * Bump Standards-Version to 4.5.1, no changes needed.
+
+ -- Stefano Rivera <stefanor@debian.org>  Fri, 12 Feb 2021 11:02:18 -0800
+
+python-cffi (1.14.4-1) unstable; urgency=medium
+
+  [ Stefano Rivera ]
+  * New upstream release.
+  * Drop patch python3.9-dbg-test-segfault, superseded upstream.
+  * Bump watch file version to 4, no changes needed.
+
+  [ Debian Janitor ]
+  * Apply multi-arch hints.
+    + python3-cffi-backend, python3-cffi-backend-dbg: Add Multi-Arch: same.
+    + python-cffi-doc: Add Multi-Arch: foreign.
+
+ -- Stefano Rivera <stefanor@debian.org>  Fri, 27 Nov 2020 21:53:32 -0800
+
+python-cffi (1.14.3-2) unstable; urgency=medium
+
+  * Revert the temporary NMU hack: Ignore test results for a first build.
+  * Patch: Fix a crash in tests under python3.9-dbg. (Closes: #971910)
+  * Update upstream metadata to point to heptapod.
+
+ -- Stefano Rivera <stefanor@debian.org>  Wed, 14 Oct 2020 09:34:33 -0700
+
+python-cffi (1.14.3-1.1) unstable; urgency=high
+
+  * Non-maintainer upload.
+  * Ignore test results for a first build.
+
+ -- Matthias Klose <doko@debian.org>  Wed, 14 Oct 2020 08:35:50 +0200
+
+python-cffi (1.14.3-1) unstable; urgency=medium
+
+  * New upstream release.
+  * Update Vcs URLs for DPMT & PAPT merger.
+  * Update Maintainer email for DPMT & PAPT merger.
+
+ -- Stefano Rivera <stefanor@debian.org>  Wed, 23 Sep 2020 13:29:18 -0700
+
+python-cffi (1.14.2-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Stefano Rivera <stefanor@debian.org>  Wed, 26 Aug 2020 21:28:03 -0700
+
+python-cffi (1.14.1-1) unstable; urgency=medium
+
+  [ Stefano Rivera ]
+  * New upstream release.
+
+  [ Debian Janitor ]
+  * Use secure URI in Homepage field.
+  * Remove obsolete field Name from debian/upstream/metadata (already
+    present in machine-readable debian/copyright).
+
+ -- Stefano Rivera <stefanor@debian.org>  Sun, 26 Jul 2020 10:48:15 -0700
+
+python-cffi (1.14.0-2) unstable; urgency=medium
+
+  * Drop python2 support; Closes: #937639
+
+ -- Sandro Tosi <morph@debian.org>  Fri, 10 Apr 2020 20:37:28 -0400
+
+python-cffi (1.14.0-1) unstable; urgency=medium
+
+  * New upstream release.
+  * Bump copyright years.
+  * Bump Standards-Version to 4.5.0, no changes needed.
+
+ -- Stefano Rivera <stefanor@debian.org>  Thu, 13 Feb 2020 21:15:43 -0800
+
+python-cffi (1.13.2-1) unstable; urgency=medium
+
+  * New upstream point release, no significant changes.
+
+ -- Stefano Rivera <stefanor@debian.org>  Tue, 24 Dec 2019 10:13:31 +0200
+
+python-cffi (1.13.1-1) unstable; urgency=medium
+
+  [ Stefano Rivera ]
+  * New upstream release. (Closes: #942865)
+
+  [ Ondřej Nový ]
+  * Bump Standards-Version to 4.4.1.
+
+ -- Stefano Rivera <stefanor@debian.org>  Sat, 02 Nov 2019 11:26:50 -0700
+
+python-cffi (1.12.3-1) unstable; urgency=medium
+
+  * New upstream release.
+  * Bump debhelper compat to 12 (and use B-D syntax).
+  * Bump Standards-Version to 4.4.0, no changes needed.
+  * Remove versioned constraints that pre-date stretch.
+
+ -- Stefano Rivera <stefanor@debian.org>  Mon, 08 Jul 2019 22:56:35 -0700
+
 python-cffi (1.12.2-1) unstable; urgency=medium
 
   * New upstream release.
