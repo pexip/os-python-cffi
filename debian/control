@@ -14,7 +14,6 @@ Build-Depends:
  python3-pycparser,
  python3-pytest,
  python3-setuptools,
- python3-sphinx,
  virtualenv
 Standards-Version: 4.5.1
 Homepage: https://cffi.readthedocs.org/
@@ -75,18 +74,3 @@ Description: Foreign Function Interface for Python 3 calling C code (Debug versi
  other approaches, that only support the ABI level.
  .
  This package contains the debug version of the python3-cffi backend.
-
-Package: python-cffi-doc
-Architecture: all
-Section: doc
-Depends: ${misc:Depends}, ${sphinxdoc:Depends}
-Multi-Arch: foreign
-Description: Foreign Function Interface for Python calling C code - documentation
- Convenient and reliable way of calling C code from Python.
- .
- The aim of this project is to provide a convenient and reliable way of calling
- C code from Python. It keeps Python logic in Python, and minimises the C
- required. It is able to work at either the C API or ABI level, unlike most
- other approaches, that only support the ABI level.
- .
- This package contains the developer documentation for cffi.

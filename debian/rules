@@ -7,11 +7,7 @@ export PYBUILD_EXT_DESTDIR_python3-dbg=debian/python3-cffi-backend-dbg
 export VIRTUALENV_DOWNLOAD=no
 
 %:
-	dh $@ --with python3,sphinxdoc --buildsystem pybuild
-
-override_dh_auto_build-indep:
-	dh_auto_build --indep
-	python3 -m sphinx -b html -d doc/build/doctrees doc/source doc/build/html
+	dh $@ --with python3 --buildsystem pybuild
 
 override_dh_auto_test:
 	PYBUILD_SYSTEM=custom \
@@ -21,10 +17,6 @@ override_dh_auto_test:
 override_dh_install:
 	debian/gen-backend-versions.py
 	dh_install
-
-override_dh_installdocs-indep:
-	dh_installdocs -p python-cffi-doc --doc-main-package python-cffi-doc
-	dh_installdocs --indep -N python-cffi-doc
 
 override_dh_installchangelogs:
 	dh_installchangelogs doc/source/whatsnew.rst
