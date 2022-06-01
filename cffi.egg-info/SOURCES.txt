@@ -154,6 +154,7 @@ testing/cffi1/test_commontypes.py
 testing/cffi1/test_dlopen.py
 testing/cffi1/test_dlopen_unicode_literals.py
 testing/cffi1/test_ffi_obj.py
+testing/cffi1/test_function_args.py
 testing/cffi1/test_new_ffi_1.py
 testing/cffi1/test_parse_c_type.py
 testing/cffi1/test_pkgconfig.py
@@ -186,3 +187,4 @@ testing/embedding/thread2-test.c
 testing/embedding/thread3-test.c
 testing/embedding/tlocal-test.c
 testing/embedding/tlocal.py
+testing/embedding/withunicode.py

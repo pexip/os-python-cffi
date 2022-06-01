@@ -2,87 +2,26 @@ Source: python-cffi
 Section: python
 Priority: optional
 Maintainer: Pexip AS <packaging@pexip.com>
-XSBC-Pexip-Original-Maintainer: Debian Python Modules Team <python-modules-team@lists.alioth.debian.org>
+XSBC-Pexip-Original-Maintainer: Debian Python Team <team+python@tracker.debian.org>
 XSBC-Pexip-Original-Uploaders: Stefano Rivera <stefanor@debian.org>
 Build-Depends:
- debhelper (>= 11),
- dh-python (>= 1.20150628),
+ debhelper-compat (= 12),
+ dh-python,
  libffi-dev,
- python-all-dbg,
- python-all-dev (>= 2.6.6-3~),
- python-py,
- python-pycparser,
- python-pytest,
- python-setuptools,
  python3-all-dbg,
- python3-all-dev (>= 3.1.2-6~),
+ python3-all-dev,
  python3-py,
  python3-pycparser,
  python3-pytest,
  python3-setuptools,
  python3-sphinx,
- virtualenv | python-virtualenv (<< 1.11.6)
-Standards-Version: 4.3.0
-Homepage: http://cffi.readthedocs.org/
-Vcs-Git: https://salsa.debian.org/python-team/modules/python-cffi.git
-Vcs-Browser: https://salsa.debian.org/python-team/modules/python-cffi
+ virtualenv
+Standards-Version: 4.5.1
+Homepage: https://cffi.readthedocs.org/
+Vcs-Git: https://salsa.debian.org/python-team/packages/python-cffi.git
+Vcs-Browser: https://salsa.debian.org/python-team/packages/python-cffi
 Rules-Requires-Root: no
 XS-Pexip-Upstream: http://deb.debian.org/debian/ bullseye
-
-Package: python-cffi
-Architecture: all
-Depends:
- python-cffi-backend (<< ${source:Version}+c),
- python-cffi-backend (>= ${source:Version}),
- ${misc:Depends},
- ${python:Depends}
-Suggests: python-dev
-Description: Foreign Function Interface for Python calling C code
- Convenient and reliable way of calling C code from Python.
- .
- The aim of this project is to provide a convenient and reliable way of calling
- C code from Python. It keeps Python logic in Python, and minimises the C
- required. It is able to work at either the C API or ABI level, unlike most
- other approaches, that only support the ABI level.
- .
- This package contains the necessary build and runtime support for cffi
- modules.
-
-Package: python-cffi-backend
-Architecture: any
-Depends: ${misc:Depends}, ${python:Depends}, ${shlibs:Depends}
-Replaces: python-cffi (<< 1)
-Breaks: python-cffi (<< 1)
-Provides: ${cffi:Provides}
-Description: Foreign Function Interface for Python calling C code - backend
- Convenient and reliable way of calling C code from Python.
- .
- The aim of this project is to provide a convenient and reliable way of calling
- C code from Python. It keeps Python logic in Python, and minimises the C
- required. It is able to work at either the C API or ABI level, unlike most
- other approaches, that only support the ABI level.
- .
- This package contains the runtime support for pre-built cffi modules.
-
-Package: python-cffi-backend-dbg
-Architecture: any
-Section: debug
-Depends:
- python-cffi-backend (= ${binary:Version}),
- ${misc:Depends},
- ${python:Depends},
- ${shlibs:Depends}
-Replaces: python-cffi-dbg (<< 1)
-Breaks: python-cffi-dbg (<< 1)
-Description: Foreign Function Interface for Python calling C code (Debug version)
- Convenient and reliable way of calling C code from Python.
- .
- The aim of this project is to provide a convenient and reliable way of calling
- C code from Python. It keeps Python logic in Python, and minimises the C
- required. It is able to work at either the C API or ABI level, unlike most
- other approaches, that only support the ABI level.
- .
- This package contains the debug version of the python-cffi backend.
 
 Package: python3-cffi
 Architecture: all
@@ -106,9 +45,8 @@ Description: Foreign Function Interface for Python 3 calling C code
 Package: python3-cffi-backend
 Architecture: any
 Depends: ${misc:Depends}, ${python3:Depends}, ${shlibs:Depends}
-Replaces: python3-cffi (<< 1)
-Breaks: python3-cffi (<< 1)
 Provides: ${cffi:Provides}
+Multi-Arch: same
 Description: Foreign Function Interface for Python 3 calling C code - runtime
  Convenient and reliable way of calling C code from Python 3.
  .
@@ -127,8 +65,7 @@ Depends:
  ${misc:Depends},
  ${python3:Depends},
  ${shlibs:Depends}
-Replaces: python3-cffi-dbg (<< 1)
-Breaks: python3-cffi-dbg (<< 1)
+Multi-Arch: same
 Description: Foreign Function Interface for Python 3 calling C code (Debug version)
  Convenient and reliable way of calling C code from Python 3.
  .
@@ -143,6 +80,7 @@ Package: python-cffi-doc
 Architecture: all
 Section: doc
 Depends: ${misc:Depends}, ${sphinxdoc:Depends}
+Multi-Arch: foreign
 Description: Foreign Function Interface for Python calling C code - documentation
  Convenient and reliable way of calling C code from Python.
  .

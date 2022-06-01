@@ -149,24 +149,13 @@ else:
     ask_supports_thread()
     ask_supports_sync_synchronize()
 
+if 'darwin' in sys.platform:
+    # priority is given to `pkg_config`, but always fall back on SDK's libffi.
+    extra_compile_args += ['-iwithsysroot/usr/include/ffi']
+
 if 'freebsd' in sys.platform:
     include_dirs.append('/usr/local/include')
     library_dirs.append('/usr/local/lib')
-
-if 'darwin' in sys.platform:
-    try:
-        p = subprocess.Popen(['xcrun', '--show-sdk-path'],
-                             stdout=subprocess.PIPE)
-    except OSError as e:
-        if e.errno not in [errno.ENOENT, errno.EACCES]:
-            raise
-    else:
-        t = p.stdout.read().decode().strip()
-        p.stdout.close()
-        if p.wait() == 0:
-            include_dirs.append(t + '/usr/include/ffi')
-
-
 
 if __name__ == '__main__':
     from setuptools import setup, Distribution, Extension
@@ -198,7 +187,7 @@ Contact
 
 `Mailing list <https://groups.google.com/forum/#!forum/python-cffi>`_
 """,
-        version='1.12.2',
+        version='1.14.5',
         packages=['cffi'] if cpython else [],
         package_data={'cffi': ['_cffi_include.h', 'parse_c_type.h', 
                                '_embedding.h', '_cffi_errors.h']}
@@ -246,5 +235,6 @@ Contact
             'Programming Language :: Python :: 3.6',
             'Programming Language :: Python :: Implementation :: CPython',
             'Programming Language :: Python :: Implementation :: PyPy',
+            'License :: OSI Approved :: MIT License',
         ],
     )
