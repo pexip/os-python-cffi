@@ -1,0 +1,2 @@
+cffi:Provides=python-cffi-backend-api-min (= 9729), python-cffi-backend-api-max (= 10495), python-cffi-backend-api-9729
+cffi:Provides=python-cffi-backend-api-min (= 9729), python-cffi-backend-api-max (= 10495), python-cffi-backend-api-9729

@@ -4,18 +4,19 @@ Priority: optional
 Maintainer: Debian Python Team <team+python@tracker.debian.org>
 Uploaders: Stefano Rivera <stefanor@debian.org>
 Build-Depends:
- debhelper-compat (= 12),
+ debhelper-compat (= 13),
  dh-python,
+ dh-sequence-python3,
+ dh-sequence-sphinxdoc <!nodoc>,
  libffi-dev,
- python3-all-dbg,
  python3-all-dev,
- python3-py,
- python3-pycparser,
- python3-pytest,
+ python3-py <!nocheck>,
+ python3-pycparser <!nocheck>,
+ python3-pytest <!nocheck>,
  python3-setuptools,
- python3-sphinx,
- virtualenv
-Standards-Version: 4.5.1
+ python3-sphinx <!nodoc>,
+ virtualenv <!nocheck>
+Standards-Version: 4.6.2
 Homepage: https://cffi.readthedocs.org/
 Vcs-Git: https://salsa.debian.org/python-team/packages/python-cffi.git
 Vcs-Browser: https://salsa.debian.org/python-team/packages/python-cffi
@@ -54,25 +55,6 @@ Description: Foreign Function Interface for Python 3 calling C code - runtime
  other approaches, that only support the ABI level.
  .
  This package contains the runtime support for pre-built cffi modules.
-
-Package: python3-cffi-backend-dbg
-Architecture: any
-Section: debug
-Depends:
- python3-cffi-backend (= ${binary:Version}),
- ${misc:Depends},
- ${python3:Depends},
- ${shlibs:Depends}
-Multi-Arch: same
-Description: Foreign Function Interface for Python 3 calling C code (Debug version)
- Convenient and reliable way of calling C code from Python 3.
- .
- The aim of this project is to provide a convenient and reliable way of calling
- C code from Python. It keeps Python logic in Python, and minimises the C
- required. It is able to work at either the C API or ABI level, unlike most
- other approaches, that only support the ABI level.
- .
- This package contains the debug version of the python3-cffi backend.
 
 Package: python-cffi-doc
 Architecture: all
