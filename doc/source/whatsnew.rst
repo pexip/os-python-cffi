@@ -2,6 +2,43 @@
 What's New
 ======================
 
+v1.15.1
+=======
+
+* If you call `ffi.embedding_api()` but don't write any `extern "Python"`
+  function there, then the resulting C code would fail an assert.  Fixed.
+
+* Updated Windows/arm64 embedded libffi static lib to v3.4.2, and scripted
+  to ease future updates (thanks Niyas Sait!)
+
+v1.15.0
+=======
+
+* Fixed MANIFEST.in to include missing file for Windows arm64 support
+
+* Fixed Linux wheel build to use gcc default ISA for libffi
+
+* Updated setup.py Python trove specifiers to currently-tested Python versions
+
+* CPython 3.10 support (including wheels)
+
+* MacOS arm64 support (including wheels)
+
+* Initial Windows arm64 support
+
+* Misc. doc and test updates
+
+v1.14.6
+=======
+
+* Test fixes for CPython 3.10.0b3
+
+* Support for `sys.unraisablehook()` on Python >= 3.8
+
+* Fix two minor memory leaks (thanks Sebastian!)
+
+* Like many projects that had an IRC channel on freenode, we moved it to
+  ``irc.libera.chat``.
 
 v1.14.5
 =======

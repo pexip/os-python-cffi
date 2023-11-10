@@ -17,7 +17,7 @@ platform as well as on Windows 32 and 64.  (It relies occasionally on
 libffi, so it depends on libffi being bug-free; this may not be fully
 the case on some of the more exotic platforms.)
 
-CFFI supports CPython 2.6, 2.7, 3.x (tested with 3.2 to 3.4); and is
+CFFI supports CPython 2.7, 3.x (tested with 3.6 to 3.9); and is
 distributed with PyPy (CFFI 1.0 is distributed with and requires
 PyPy 2.6).
 
@@ -31,7 +31,7 @@ libraries on PyPy.
 
 Requirements:
 
-* CPython 2.6 or 2.7 or 3.x, or PyPy (PyPy 2.0 for the earliest
+* CPython 2.7 or 3.x, or PyPy (PyPy 2.0 for the earliest
   versions of CFFI; or PyPy 2.6 for CFFI 1.0).
 
 * in some cases you need to be able to compile C extension modules.
@@ -52,11 +52,11 @@ Download and Installation:
 
 * https://pypi.python.org/pypi/cffi
 
-* Checksums of the "source" package version 1.14.5:
+* Checksums of the "source" package version 1.15.1:
 
    - MD5: ...
 
-   - SHA: ...
+   - SHA1: ...
 
    - SHA256: ...
 
@@ -140,10 +140,10 @@ Win32 and Win64 work and are tested at least each official release.
 
 The recommended C compiler compatible with Python 2.7 is this one:
 http://www.microsoft.com/en-us/download/details.aspx?id=44266
-There is a known problem with distutils on Python 2.7, as 
-explained in https://bugs.python.org/issue23246, and the same 
+There is a known problem with distutils on Python 2.7, as
+explained in https://bugs.python.org/issue23246, and the same
 problem applies whenever you want to run compile() to build a dll with
-this specific compiler suite download. 
+this specific compiler suite download.
 ``import setuptools`` might help, but YMMV
 
 For Python 3.4 and beyond:

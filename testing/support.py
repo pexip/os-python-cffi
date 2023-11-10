@@ -33,9 +33,14 @@ class StdErrCapture(object):
             from io import StringIO
         self.old_stderr = sys.stderr
         sys.stderr = f = StringIO()
+        if hasattr(sys, '__unraisablehook__'):           # work around pytest
+            self.old_unraisablebook = sys.unraisablehook # on recent CPythons
+            sys.unraisablehook = sys.__unraisablehook__
         return f
     def __exit__(self, *args):
         sys.stderr = self.old_stderr
+        if hasattr(self, 'old_unraisablebook'):
+            sys.unraisablehook = self.old_unraisablebook
 
 
 class FdWriteCapture(object):
@@ -112,3 +117,12 @@ else:
         extra_compile_args = ['-Werror', '-Wall', '-Wextra', '-Wconversion',
                               '-Wno-unused-parameter',
                               '-Wno-unreachable-code']
+
+is_musl = False
+if sys.platform == 'linux':
+    try:
+        from packaging.tags import platform_tags
+        is_musl = any(t.startswith('musllinux') for t in platform_tags())
+        del platform_tags
+    except ImportError:
+        pass

@@ -2,7 +2,7 @@
 #include <Python.h>
 #include "structmember.h"
 
-#define CFFI_VERSION  "1.14.5"
+#define CFFI_VERSION  "1.15.1"
 
 #ifdef MS_WIN32
 #include <windows.h>
@@ -178,6 +178,10 @@
 
 #if PY_VERSION_HEX < 0x030900a4
 # define Py_SET_REFCNT(obj, val) (Py_REFCNT(obj) = (val))
+#endif
+
+#if PY_VERSION_HEX >= 0x03080000
+# define USE_WRITEUNRAISABLEMSG
 #endif
 
 /************************************************************/
@@ -2193,7 +2197,7 @@ static PyObject *_frombuf_repr(CDataObject *cd, const char *cd_type_name)
     }
 }
 
-static PyObject *cdataowning_repr(CDataObject *cd)
+static Py_ssize_t cdataowning_size_bytes(CDataObject *cd)
 {
     Py_ssize_t size = _cdata_var_byte_size(cd);
     if (size < 0) {
@@ -2204,6 +2208,12 @@ static PyObject *cdataowning_repr(CDataObject *cd)
         else
             size = cd->c_type->ct_size;
     }
+    return size;
+}
+
+static PyObject *cdataowning_repr(CDataObject *cd)
+{
+    Py_ssize_t size = cdataowning_size_bytes(cd);
     return PyText_FromFormat("<cdata '%s' owning %zd bytes>",
                              cd->c_type->ct_name, size);
 }
@@ -4516,14 +4526,18 @@ static void *b_do_dlopen(PyObject *args, const char **p_printable_filename,
         if (PyUnicode_Check(s))
         {
             s = PyUnicode_AsUTF8String(s);
-            if (s == NULL)
+            if (s == NULL) {
+                PyMem_Free(filename_or_null);
                 return NULL;
+            }
             *p_temp = s;
         }
 #endif
         *p_printable_filename = PyText_AsUTF8(s);
-        if (*p_printable_filename == NULL)
+        if (*p_printable_filename == NULL) {
+            PyMem_Free(filename_or_null);
             return NULL;
+        }
     }
     if ((flags & (RTLD_NOW | RTLD_LAZY)) == 0)
         flags |= RTLD_NOW;
@@ -4536,6 +4550,7 @@ static void *b_do_dlopen(PyObject *args, const char **p_printable_filename,
 #endif
 
     handle = dlopen(filename_or_null, flags);
+    PyMem_Free(filename_or_null);
 
 #ifdef MS_WIN32
   got_handle:
@@ -4594,7 +4609,7 @@ static PyObject *get_unique_type(CTypeDescrObject *x,
            array      [ctype, length]
            funcptr    [ctresult, ellipsis+abi, num_args, ctargs...]
     */
-    PyObject *key, *y;
+    PyObject *key, *y, *res;
     void *pkey;
 
     key = PyBytes_FromStringAndSize(NULL, keylength * sizeof(void *));
@@ -4626,8 +4641,9 @@ static PyObject *get_unique_type(CTypeDescrObject *x,
     /* the 'value' in unique_cache doesn't count as 1, but don't use
        Py_DECREF(x) here because it will confuse debug builds into thinking
        there was an extra DECREF in total. */
-    ((PyObject *)x)->ob_refcnt--;
-    return (PyObject *)x;
+    res = (PyObject *)x;
+    Py_SET_REFCNT(res, Py_REFCNT(res) - 1);
+    return res;
 
  error:
     Py_DECREF(x);
@@ -5656,7 +5672,8 @@ static ffi_type *fb_fill_type(struct funcbuilder_s *fb, CTypeDescrObject *ct,
     }
 }
 
-#define ALIGN_ARG(n)  ((n) + 7) & ~7
+#define ALIGN_TO(n, a)  ((n) + ((a)-1)) & ~((a)-1)
+#define ALIGN_ARG(n)    ALIGN_TO(n, 8)
 
 static int fb_build(struct funcbuilder_s *fb, PyObject *fargs,
                     CTypeDescrObject *fresult)
@@ -5681,10 +5698,12 @@ static int fb_build(struct funcbuilder_s *fb, PyObject *fargs,
         /* exchange data size */
         /* first, enough room for an array of 'nargs' pointers */
         exchange_offset = nargs * sizeof(void*);
+        /* then enough room for the result --- which means at least
+           sizeof(ffi_arg), according to the ffi docs, but we also
+           align according to the result type, for issue #531 */
+        exchange_offset = ALIGN_TO(exchange_offset, fb->rtype->alignment);
         exchange_offset = ALIGN_ARG(exchange_offset);
         cif_descr->exchange_offset_arg[0] = exchange_offset;
-        /* then enough room for the result --- which means at least
-           sizeof(ffi_arg), according to the ffi docs */
         i = fb->rtype->size;
         if (i < (Py_ssize_t)sizeof(ffi_arg))
             i = sizeof(ffi_arg);
@@ -5712,6 +5731,7 @@ static int fb_build(struct funcbuilder_s *fb, PyObject *fargs,
         if (fb->atypes != NULL) {
             fb->atypes[i] = atype;
             /* exchange data size */
+            exchange_offset = ALIGN_TO(exchange_offset, atype->alignment);
             exchange_offset = ALIGN_ARG(exchange_offset);
             cif_descr->exchange_offset_arg[1 + i] = exchange_offset;
             exchange_offset += atype->size;
@@ -5728,6 +5748,7 @@ static int fb_build(struct funcbuilder_s *fb, PyObject *fargs,
 }
 
 #undef ALIGN_ARG
+#undef ALIGN_TO
 
 static void fb_cat_name(struct funcbuilder_s *fb, const char *piece,
                         int piecelen)
@@ -5849,7 +5870,7 @@ static cif_description_t *fb_prepare_cif(PyObject *fargs,
     char *buffer;
     cif_description_t *cif_descr;
     struct funcbuilder_s funcbuffer;
-    ffi_status status = -1;
+    ffi_status status = (ffi_status)-1;
 
     funcbuffer.nb_bytes = 0;
     funcbuffer.bufferp = NULL;
@@ -5884,7 +5905,7 @@ static cif_description_t *fb_prepare_cif(PyObject *fargs,
     }
 #endif
 
-    if (status == -1) {
+    if (status == (ffi_status)-1) {
         status = ffi_prep_cif(&cif_descr->cif, fabi, funcbuffer.nargs,
                               funcbuffer.rtype, funcbuffer.atypes);
     }
@@ -6061,6 +6082,43 @@ static void _my_PyErr_WriteUnraisable(PyObject *t, PyObject *v, PyObject *tb,
                                       char *extra_error_line)
 {
     /* like PyErr_WriteUnraisable(), but write a full traceback */
+#ifdef USE_WRITEUNRAISABLEMSG
+
+    /* PyErr_WriteUnraisable actually writes the full traceback anyway
+       from Python 3.4, but we can't really get the formatting of the
+       custom text to be what we want.  We can do better from Python
+       3.8 by calling the new _PyErr_WriteUnraisableMsg().
+       Luckily it's also Python 3.8 that adds new functionality that
+       people might want: the new sys.unraisablehook().
+    */
+    PyObject *s;
+    int first_char;
+    assert(objdescr != NULL && objdescr[0] != 0);   /* non-empty */
+    first_char = objdescr[0];
+    if (first_char >= 'A' && first_char <= 'Z')
+        first_char += 'a' - 'A';    /* lower() the very first character */
+    if (extra_error_line == NULL)
+        extra_error_line = "";
+
+    if (obj != NULL)
+        s = PyUnicode_FromFormat("%c%s%R%s",
+            first_char, objdescr + 1, obj, extra_error_line);
+    else
+        s = PyUnicode_FromFormat("%c%s%s",
+            first_char, objdescr + 1, extra_error_line);
+
+    PyErr_Restore(t, v, tb);
+    if (s != NULL) {
+        _PyErr_WriteUnraisableMsg(PyText_AS_UTF8(s), NULL);
+        Py_DECREF(s);
+    }
+    else
+        PyErr_WriteUnraisable(obj);   /* best effort */
+    PyErr_Clear();
+
+#else
+
+    /* version for Python 2.7 and < 3.8 */
     PyObject *f;
 #if PY_MAJOR_VERSION >= 3
     /* jump through hoops to ensure the tb is attached to v, on Python 3 */
@@ -6085,6 +6143,8 @@ static void _my_PyErr_WriteUnraisable(PyObject *t, PyObject *v, PyObject *tb,
     Py_XDECREF(t);
     Py_XDECREF(v);
     Py_XDECREF(tb);
+
+#endif
 }
 
 static void general_invoke_callback(int decode_args_from_libffi,
@@ -6134,7 +6194,11 @@ static void general_invoke_callback(int decode_args_from_libffi,
         goto error;
     if (convert_from_object_fficallback(result, SIGNATURE(1), py_res,
                                         decode_args_from_libffi) < 0) {
+#ifdef USE_WRITEUNRAISABLEMSG
+        extra_error_line = ", trying to convert the result back to C";
+#else
         extra_error_line = "Trying to convert the result back to C:\n";
+#endif
         goto error;
     }
  done:
@@ -6186,10 +6250,16 @@ static void general_invoke_callback(int decode_args_from_libffi,
             _my_PyErr_WriteUnraisable(exc1, val1, tb1,
                                       "From cffi callback ", py_ob,
                                       extra_error_line);
+#ifdef USE_WRITEUNRAISABLEMSG
+            _my_PyErr_WriteUnraisable(exc2, val2, tb2,
+                 "during handling of the above exception by 'onerror'",
+                 NULL, NULL);
+#else
             extra_error_line = ("\nDuring the call to 'onerror', "
                                 "another exception occurred:\n\n");
             _my_PyErr_WriteUnraisable(exc2, val2, tb2,
                                       NULL, NULL, extra_error_line);
+#endif
             _cffi_stop_error_capture(ecap);
         }
     }
@@ -6952,12 +7022,14 @@ b_buffer_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     /* this is the constructor of the type implemented in minibuffer.h */
     CDataObject *cd;
     Py_ssize_t size = -1;
+    int explicit_size;
     static char *keywords[] = {"cdata", "size", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!|n:buffer", keywords,
                                      &CData_Type, &cd, &size))
         return NULL;
 
+    explicit_size = size >= 0;
     if (size < 0)
         size = _cdata_var_byte_size(cd);
 
@@ -6980,6 +7052,20 @@ b_buffer_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
                      "don't know the size pointed to by '%s'",
                      cd->c_type->ct_name);
         return NULL;
+    }
+
+    if (explicit_size && CDataOwn_Check(cd)) {
+        Py_ssize_t size_max = cdataowning_size_bytes(cd);
+        if (size > size_max) {
+            char msg[256];
+            sprintf(msg, "ffi.buffer(cdata, bytes): creating a buffer of %llu "
+                         "bytes over a cdata that owns only %llu bytes.  This "
+                         "will crash if you access the extra memory",
+                         (unsigned PY_LONG_LONG)size,
+                         (unsigned PY_LONG_LONG)size_max);
+            if (PyErr_WarnEx(PyExc_UserWarning, msg, 1))
+                return NULL;
+        }
     }
     /*WRITE(cd->c_data, size)*/
     return minibuffer_new(cd->c_data, size, (PyObject *)cd);
