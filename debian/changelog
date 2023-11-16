@@ -1,3 +1,9 @@
+python-cffi (1.15.1-5pexip1) pexip-bookworm; urgency=medium
+
+  * Initial bookworm build
+
+ -- Mark Hymers <mark.hymers@pexip.com>  Thu, 16 Nov 2023 10:22:18 +0000
+
 python-cffi (1.15.1-5) unstable; urgency=medium
 
   * Patch: Fix test failures on hppa, thanks John David Anglin.
