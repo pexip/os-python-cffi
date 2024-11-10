@@ -15,7 +15,8 @@ endif
 
 override_dh_auto_test:
 	PYBUILD_SYSTEM=custom \
-		PYBUILD_TEST_ARGS="{interpreter} -m pytest c/ testing/" \
+		PYBUILD_BEFORE_TEST="{interpreter} setup.py egg_info" \
+		PYBUILD_TEST_ARGS="{interpreter} -m pytest src/c/ testing/" \
 		dh_auto_test
 
 execute_before_dh_install:
@@ -34,4 +35,4 @@ override_dh_strip:
 	dh_strip --remaining-packages
 
 execute_after_dh_clean:
-	rm -rf $(wildcard testing/*/snippets/*/build testing/*/snippets/*/dist testing/*/snippets/*/*.egg-info)
+	rm -rf $(wildcard testing/*/snippets/*/build testing/*/snippets/*/dist testing/*/snippets/*/*.egg-info testing/*/snippets/*/__pycache__)

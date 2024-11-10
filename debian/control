@@ -7,16 +7,19 @@ Build-Depends:
  debhelper-compat (= 13),
  dh-python,
  dh-sequence-python3,
- dh-sequence-sphinxdoc <!nodoc>,
  libffi-dev,
- python3-all-dev,
+ libpython3-all-dev,
+ pybuild-plugin-pyproject,
+ python3-all-dev:any,
  python3-py <!nocheck>,
  python3-pycparser <!nocheck>,
  python3-pytest <!nocheck>,
  python3-setuptools,
- python3-sphinx <!nodoc>,
  virtualenv <!nocheck>
-Standards-Version: 4.6.2
+Build-Depends-Indep:
+ dh-sequence-sphinxdoc <!nodoc>,
+ python3-sphinx <!nodoc>,
+Standards-Version: 4.7.0
 Homepage: https://cffi.readthedocs.org/
 Vcs-Git: https://salsa.debian.org/python-team/packages/python-cffi.git
 Vcs-Browser: https://salsa.debian.org/python-team/packages/python-cffi

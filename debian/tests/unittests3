@@ -2,7 +2,7 @@
 set -efu
 
 pythons="$(py3versions -s)"
-cp -a c testing "$AUTOPKGTEST_TMP"
+cp -a src/c testing "$AUTOPKGTEST_TMP"
 
 # Not appropriate:
 rm "$AUTOPKGTEST_TMP"/testing/cffi0/test_version.py

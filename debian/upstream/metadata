@@ -1,11 +1,11 @@
 ---
-Bug-Database: https://foss.heptapod.net/pypy/cffi/-/issues
-Bug-Submit: https://foss.heptapod.net/pypy/cffi/-/issues/new
+Bug-Database: https://github.com/python-cffi/cffi/issues
+Bug-Submit: https://github.com/python-cffi/cffi/issues/new
 Changelog: https://cffi.readthedocs.io/en/latest/whatsnew.html
 Contact: https://groups.google.com/forum/#!forum/python-cffi
 Documentation: http://cffi.readthedocs.io/
 Registry:
   - Name: PyPI
     Entry: cffi
-Repository: https://foss.heptapod.net/pypy/cffi
-Repository-Browse: https://foss.heptapod.net/pypy/cffi
+Repository: https://github.com/python-cffi/cffi.git
+Repository-Browse: https://github.com/python-cffi/cffi

@@ -2,7 +2,7 @@
 #include <Python.h>
 #include "structmember.h"
 
-#define CFFI_VERSION  "1.15.1"
+#define CFFI_VERSION  "1.17.1"
 
 #ifdef MS_WIN32
 #include <windows.h>
@@ -53,11 +53,22 @@
 # if _MSC_VER < 1800   /* MSVC < 2013 */
    typedef unsigned char _Bool;
 # endif
+# define _cffi_float_complex_t   _Fcomplex    /* include <complex.h> for it */
+# define _cffi_double_complex_t  _Dcomplex    /* include <complex.h> for it */
 #else
 # include <stdint.h>
 # if (defined (__SVR4) && defined (__sun)) || defined(_AIX) || defined(__hpux)
 #  include <alloca.h>
 # endif
+# define _cffi_float_complex_t   float _Complex
+# define _cffi_double_complex_t  double _Complex
+#endif
+
+/* Convert from closure pointer to function pointer. */
+#if defined(__hppa__) && !defined(__LP64__)
+#define CFFI_CLOSURE_TO_FNPTR(type, f)  ((type)((unsigned int)(f) | 2))
+#else
+#define CFFI_CLOSURE_TO_FNPTR(type, f)  ((type)(f))
 #endif
 
 
@@ -105,6 +116,15 @@
 # define CFFI_CHECK_FFI_PREP_CIF_VAR __builtin_available(macos 10.15, ios 13, watchos 6, tvos 13, *)
 # define CFFI_CHECK_FFI_PREP_CIF_VAR_MAYBE 1
 
+#elif defined(__EMSCRIPTEN__)
+
+# define CFFI_CHECK_FFI_CLOSURE_ALLOC 1
+# define CFFI_CHECK_FFI_CLOSURE_ALLOC_MAYBE 1
+# define CFFI_CHECK_FFI_PREP_CLOSURE_LOC 1
+# define CFFI_CHECK_FFI_PREP_CLOSURE_LOC_MAYBE 1
+# define CFFI_CHECK_FFI_PREP_CIF_VAR 1
+# define CFFI_CHECK_FFI_PREP_CIF_VAR_MAYBE 1
+
 #else
 
 # define CFFI_CHECK_FFI_CLOSURE_ALLOC 0
@@ -127,8 +147,8 @@
 # define PyText_Check PyUnicode_Check
 # define PyTextAny_Check PyUnicode_Check
 # define PyText_FromFormat PyUnicode_FromFormat
-# define PyText_AsUTF8 _PyUnicode_AsString   /* PyUnicode_AsUTF8 in Py3.3 */
-# define PyText_AS_UTF8 _PyUnicode_AsString
+# define PyText_AsUTF8 PyUnicode_AsUTF8
+# define PyText_AS_UTF8 PyUnicode_AsUTF8
 # if PY_VERSION_HEX >= 0x03030000
 #  define PyText_GetSize PyUnicode_GetLength
 # else
@@ -1606,6 +1626,8 @@ convert_struct_from_object(char *data, CTypeDescrObject *ct, PyObject *init,
     return _convert_error(init, ct, expected);
 }
 
+static PyObject* try_extract_directfnptr(PyObject *x);   /* forward */
+
 #ifdef __GNUC__
 # if __GNUC__ >= 4
 /* Don't go inlining this huge function.  Needed because occasionally
@@ -1633,9 +1655,18 @@ convert_from_object(char *data, CTypeDescrObject *ct, PyObject *init)
         CTypeDescrObject *ctinit;
 
         if (!CData_Check(init)) {
-            expected = "cdata pointer";
-            goto cannot_convert;
+            PyObject *func_cdata = try_extract_directfnptr(init);
+            if (func_cdata != NULL && CData_Check(func_cdata)) {
+                init = func_cdata;
+            }
+            else {
+                if (PyErr_Occurred())
+                    return -1;
+                expected = "cdata pointer";
+                goto cannot_convert;
+            }
         }
+
         ctinit = ((CDataObject *)init)->c_type;
         if (!(ctinit->ct_flags & (CT_POINTER|CT_FUNCTIONPTR))) {
             if (ctinit->ct_flags & CT_ARRAY)
@@ -1938,6 +1969,7 @@ static void cdataowninggc_dealloc(CDataObject *cd)
 static void cdatafrombuf_dealloc(CDataObject *cd)
 {
     Py_buffer *view = ((CDataObject_frombuf *)cd)->bufferview;
+    PyObject_GC_UnTrack(cd);
     cdata_dealloc(cd);
 
     PyBuffer_Release(view);
@@ -2043,6 +2075,7 @@ static void cdatagcp_dealloc(CDataObject_gcp *cd)
 {
     PyObject *destructor = cd->destructor;
     PyObject *origobj = cd->origobj;
+    PyObject_GC_UnTrack(cd);
     cdata_dealloc((CDataObject *)cd);
 
     gcp_finalize(destructor, origobj);
@@ -2437,7 +2470,11 @@ static Py_hash_t cdata_hash(PyObject *v)
         }
         Py_DECREF(vv);
     }
+#if PY_VERSION_HEX < 0x030D0000
     return _Py_HashPointer(((CDataObject *)v)->c_data);
+#else
+    return Py_HashPointer(((CDataObject *)v)->c_data);
+#endif
 }
 
 static Py_ssize_t
@@ -3189,7 +3226,7 @@ cdata_call(CDataObject *cd, PyObject *args, PyObject *kwds)
 
     Py_BEGIN_ALLOW_THREADS
     restore_errno();
-    ffi_call(&cif_descr->cif, (void (*)(void))(cd->c_data),
+    ffi_call(&cif_descr->cif, CFFI_CLOSURE_TO_FNPTR(void (*)(void), cd->c_data),
              resultdata, buffer_array);
     save_errno();
     Py_END_ALLOW_THREADS
@@ -4072,10 +4109,20 @@ static CDataObject *cast_to_integer_or_char(CTypeDescrObject *ct, PyObject *ob)
         value = res;
     }
     else {
+        if (PyCFunction_Check(ob)) {
+            PyObject *func_cdata = try_extract_directfnptr(ob);
+            if (func_cdata != NULL && CData_Check(func_cdata)) {
+                value = (Py_intptr_t)((CDataObject *)func_cdata)->c_data;
+                goto got_value;
+            }
+            if (PyErr_Occurred())
+                return NULL;
+        }
         value = _my_PyLong_AsUnsignedLongLong(ob, 0);
         if (value == (unsigned PY_LONG_LONG)-1 && PyErr_Occurred())
             return NULL;
     }
+  got_value:
     if (ct->ct_flags & CT_IS_BOOL)
         value = !!value;
     cd = _new_casted_primitive(ct);
@@ -4131,6 +4178,15 @@ static PyObject *do_cast(CTypeDescrObject *ct, PyObject *ob)
                     (CT_POINTER|CT_FUNCTIONPTR|CT_ARRAY)) {
                 return new_simple_cdata(cdsrc->c_data, ct);
             }
+        }
+        if (PyCFunction_Check(ob)) {
+            PyObject *func_cdata = try_extract_directfnptr(ob);
+            if (func_cdata != NULL && CData_Check(func_cdata)) {
+                char *ptr = ((CDataObject *)func_cdata)->c_data;
+                return new_simple_cdata(ptr, ct);
+            }
+            if (PyErr_Occurred())
+                return NULL;
         }
         if ((ct->ct_flags & CT_POINTER) &&
                 (ct->ct_itemdescr->ct_flags & CT_IS_FILE) &&
@@ -4506,7 +4562,7 @@ static void *b_do_dlopen(PyObject *args, const char **p_printable_filename,
             if (*p_printable_filename == NULL)
                 return NULL;
 
-            sz1 = PyUnicode_GetSize(filename_unicode) + 1;
+            sz1 = PyText_GetSize(filename_unicode) + 1;
             sz1 *= 2;   /* should not be needed, but you never know */
             w1 = alloca(sizeof(wchar_t) * sz1);
             sz1 = PyUnicode_AsWideChar((PyUnicodeObject *)filename_unicode,
@@ -4514,7 +4570,7 @@ static void *b_do_dlopen(PyObject *args, const char **p_printable_filename,
             if (sz1 < 0)
                 return NULL;
             w1[sz1] = 0;
-            handle = dlopenW(w1);
+            handle = dlopenWinW(w1, flags);
             goto got_handle;
         }
         PyErr_Clear();
@@ -6109,7 +6165,11 @@ static void _my_PyErr_WriteUnraisable(PyObject *t, PyObject *v, PyObject *tb,
 
     PyErr_Restore(t, v, tb);
     if (s != NULL) {
+#if PY_VERSION_HEX >= 0x030D0000
+        PyErr_FormatUnraisable("Exception ignored %S", s);
+#else
         _PyErr_WriteUnraisableMsg(PyText_AS_UTF8(s), NULL);
+#endif
         Py_DECREF(s);
     }
     else
@@ -6392,7 +6452,7 @@ static PyObject *b_callback(PyObject *self, PyObject *args)
         goto error;
     Py_INCREF(ct);
     cd->head.c_type = ct;
-    cd->head.c_data = (char *)closure_exec;
+    cd->head.c_data = CFFI_CLOSURE_TO_FNPTR(char *, closure_exec);
     cd->head.c_weakreflist = NULL;
     closure->user_data = NULL;
     cd->closure = closure;

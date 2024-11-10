@@ -4,7 +4,7 @@ import re
 
 
 def target_version():
-    with open('cffi/recompiler.py', encoding='UTF-8') as f:
+    with open('src/cffi/recompiler.py', encoding='UTF-8') as f:
         for line in f:
             m = re.match(r'^VERSION_BASE = (0x[0-9A-F]+)$', line)
             if m:
@@ -14,7 +14,7 @@ def target_version():
 
 def backend_supported_versions():
     versions = {}
-    with open('c/cffi1_module.c', encoding='UTF-8') as f:
+    with open('src/c/cffi1_module.c', encoding='UTF-8') as f:
         for line in f:
             m = re.match(r'^#define CFFI_VERSION_(MIN|MAX) *(0x[0-9A-F]+)$',
                          line)
@@ -27,7 +27,7 @@ def backend_supported_versions():
 
 versions = backend_supported_versions()
 target = target_version()
-for pkg in ('python-cffi', 'python3-cffi'):
+for pkg in ('python3-cffi',):
     subst = {
         'pkg': pkg,
         'min': versions[0],
