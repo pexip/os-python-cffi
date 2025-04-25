@@ -80,7 +80,8 @@ In order of complexity:
 
 * Finally, you can (but don't have to) use CFFI's **Distutils** or
   **Setuptools integration** when writing a ``setup.py``.  For
-  Distutils (only in out-of-line API mode):
+  Distutils (only in out-of-line API mode; deprecated since
+  Python 3.10):
 
   .. code-block:: python
 
@@ -94,7 +95,7 @@ In order of complexity:
         ext_modules=[foo_build.ffibuilder.distutils_extension()],
     )
 
-  For Setuptools (out-of-line, but works in ABI or API mode;
+  For Setuptools (out-of-line only, but works in ABI or API mode;
   recommended):
 
   .. code-block:: python
@@ -380,6 +381,14 @@ Useful if you have special needs (e.g. you need the GNU extension
 automatically if the FFI object is garbage-collected (but you can still
 call ``ffi.dlclose()`` explicitly if needed).
 
+*New in version 1.17:* on Windows, ``ffi.dlopen(filename, flags=0)`` now
+passes the flags to ``LoadLibraryEx()``.  Moreover, if you use the
+default value of 0 but ``filename`` contains a slash or backslash
+character, it will instead use
+``LOAD_LIBRARY_SEARCH_DEFAULT_DIRS | LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR``.
+This ensures that dependent DLLs from the same path are also found.
+It is what ctypes does too.
+
 
 .. _set_source:
 
@@ -431,9 +440,9 @@ list of extra .c files compiled and linked together (the file
 first argument to ``sources``).  See the distutils documentations for
 `more information about the other arguments`__.
 
-.. __: http://docs.python.org/distutils/setupscript.html#library-options
-.. _distutils: http://docs.python.org/distutils/setupscript.html#describing-extension-modules
-.. _setuptools: https://pythonhosted.org/setuptools/setuptools.html
+.. __: https://setuptools.pypa.io/en/stable/userguide/ext_modules.html#building-extension-modules
+.. _distutils: http://docs.python.org/3.11/distutils/setupscript.html#describing-extension-modules
+.. _setuptools: https://setuptools.pypa.io/
 
 An extra keyword argument processed internally is
 ``source_extension``, defaulting to ``".c"``.  The file generated will
@@ -489,18 +498,19 @@ Moreover, you can use "``...``" (literally, dot-dot-dot) in the
 ``cdef()`` at various places, in order to ask the C compiler to fill
 in the details.  These places are:
 
-*  structure declarations: any ``struct { }`` or ``union { }`` that ends
-   with "``...;``" as the last "field" is partial: it may be missing
-   fields, have them declared out of order, use non-standard alignment,
-   etc.  Precisely, the field offsets, total struct size, and total
-   struct alignment deduced by looking at the ``cdef`` are not relied
-   upon and will instead be corrected by the compiler.  (But note that you
-   can only access fields that you declared, not others.)  Any ``struct``
+``struct { }`` or ``union { }``
+   Use "``...;``" as the last "field" to declare a partial structure.
+   This means fields can be left undeclared, declared out of order, or use
+   non-standard alignment.  Precisely, the field offsets, total struct size,
+   and total struct alignment aren't deduced by looking at the ``cdef``.
+   Instead they will be corrected by the compiler.  Note that you can only
+   access fields that you declared; and you must use the correct type for
+   those you declare, the compiler can't figure it out.  Any ``struct``
    declaration which doesn't use "``...``" is assumed to be exact, but this is
    checked: you get an error if it is not correct.
 
-*  integer types: the syntax "``typedef
-   int... foo_t;``" declares the type ``foo_t`` as an integer type
+``typedef int... foo_t;``
+   Declares the type ``foo_t`` as an integer type
    whose exact size and signedness is not specified.  The compiler will
    figure it out.  (Note that this requires ``set_source()``; it does
    not work with ``verify()``.)  The ``int...`` can be replaced with
@@ -509,17 +519,18 @@ in the details.  These places are:
    ``(u)int(8,16,32,64)_t`` in Python, but in the generated C code,
    only ``foo_t`` is used.
 
-* *New in version 1.3:* floating-point types: "``typedef
-  float... foo_t;``" (or equivalently "``typedef double... foo_t;``")
-  declares ``foo_t`` as a-float-or-a-double; the compiler will figure
-  out which it is.  Note that if the actual C type is even larger
+``typedef float... foo_t;``
+  *New in version 1.3:* Declares ``foo_t`` as a-float-or-a-double; the
+  compiler will figure out which it is.  ``typedef double... foo_t;`` has
+  the same effect. Note that if the actual C type is even larger
   (``long double`` on some platforms), then compilation will fail.
   The problem is that the Python "float" type cannot be used to store
   the extra precision.  (Use the non-dot-dot-dot syntax ``typedef long
   double foo_t;`` as usual, which returns values that are not Python
   floats at all but cdata "long double" objects.)
 
-*  unknown types: the syntax "``typedef ... foo_t;``" declares the type
+``typedef ... foo_t;``
+   Declares the type
    ``foo_t`` as opaque.  Useful mainly for when the API takes and returns
    ``foo_t *`` without you needing to look inside the ``foo_t``.  Also
    works with "``typedef ... *foo_p;``" which declares the pointer type
@@ -531,8 +542,9 @@ in the details.  These places are:
    ``foo_t`` is not opaque, but just a struct where you don't know any
    field; then you would use "``typedef struct { ...; } foo_t;``".
 
-*  array lengths: when used as structure fields or in global variables,
-   arrays can have an unspecified length, as in "``extern int n[...];``".  The
+``extern int n[...];``
+   When used as structure fields or in global variables,
+   arrays can have an unspecified length.  The
    length is completed by the C compiler.
    This is slightly different from "``extern int n[];``", because the latter
    means that the length is not known even to the C compiler, and thus
@@ -548,18 +560,19 @@ in the details.  These places are:
    ``[]``, both in C and in CFFI, but any dimension can be given as
    ``[...]`` in CFFI.
 
-*  enums: if you don't know the exact order (or values) of the declared
-   constants, then use this syntax: "``enum foo { A, B, C, ... };``"
-   (with a trailing "``...``").  The C compiler will be used to figure
+``enum foo { A, B, C, ... };``
+   If you don't know the exact order (or values) of the declared
+   constants, then declare them with a trailing "``...``".
+   The C compiler will be used to figure
    out the exact values of the constants.  An alternative syntax is
    "``enum foo { A=..., B, C };``" or even
    "``enum foo { A=..., B=..., C=... };``".  Like
    with structs, an ``enum`` without "``...``" is assumed to
    be exact, and this is checked.
 
-*  integer constants and macros: you can write in the ``cdef`` the line
-   "``#define FOO ...``", with any macro name FOO but with ``...`` as
-   a value.  Provided the macro
+``#define FOO ...``
+   For integer constants and macros you can write a line in the ``cdef``
+   with any macro name FOO but with ``...`` as a value.  Provided the macro
    is defined to be an integer value, this value will be available via
    an attribute of the library object.  The
    same effect can be achieved by writing a declaration
@@ -654,6 +667,12 @@ write).  If you choose, you can include this .py file pre-packaged in
 your own distributions: it is identical for any Python version (2 or
 3).
 
+*New in version 1.17.1:* ``filename`` can instead be a file-like object
+(such as a StringIO instance). The generated code will be written to this
+file-like object. However, if an error arises during generation, partial
+code may be written; it is the caller's responsibility to clean up
+if this occurs.
+
 **ffibuilder.emit_c_code(filename):** generate the given .c file (for API
 mode) without compiling it.  Can be used if you have some other method
 to compile it, e.g. if you want to integrate with some larger build
@@ -662,6 +681,12 @@ the .c file: unless the build script you used depends on the OS or
 platform, the .c file itself is generic (it would be exactly the same
 if produced on a different OS, with a different version of CPython, or
 with PyPy; it is done with generating the appropriate ``#ifdef``).
+
+*New in version 1.17.1:* ``filename`` can instead be a file-like object
+(such as a StringIO instance). The generated code will be written to this
+file-like object. However, if an error arises during generation, partial
+code may be written; it is the caller's responsibility to clean up
+if this occurs.
 
 **ffibuilder.distutils_extension(tmpdir='build', verbose=True):** for
 distutils-based ``setup.py`` files.  Calling this creates the .c file

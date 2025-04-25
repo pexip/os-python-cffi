@@ -1,4 +1,5 @@
-import py, sys
+import sys
+import pytest
 from cffi import cffi_opcode
 
 
@@ -10,7 +11,7 @@ def check(input, expected_output=None, expected_ffi_error=False):
         assert isinstance(ct, ffi.CType)
         assert ct.cname == (expected_output or input)
     else:
-        e = py.test.raises(ffi.error, ffi.typeof, input)
+        e = pytest.raises(ffi.error, ffi.typeof, input)
         if isinstance(expected_ffi_error, str):
             assert str(e.value) == expected_ffi_error
 
@@ -44,8 +45,10 @@ def test_funcptr_rewrite_args():
     check("int(*)(long[5])", "int(*)(long *)")
 
 def test_all_primitives():
+    mapping = {"_cffi_float_complex_t": "float _Complex",
+               "_cffi_double_complex_t": "double _Complex"}
     for name in cffi_opcode.PRIMITIVE_TO_INDEX:
-        check(name, name)
+        check(name, mapping.get(name, name))
 
 def check_func(input, expected_output=None):
     import _cffi_backend

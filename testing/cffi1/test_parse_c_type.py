@@ -1,16 +1,18 @@
-import sys, re, os, py
+import sys, re, os
+import pytest
 import cffi
 from cffi import cffi_opcode
+from pathlib import Path
 
 if '__pypy__' in sys.builtin_module_names:
     try:
         # pytest >= 4.0
-        py.test.skip("not available on pypy", allow_module_level=True)
+        pytest.skip("not available on pypy", allow_module_level=True)
     except TypeError:
         # older pytest
-        py.test.skip("not available on pypy")
+        pytest.skip("not available on pypy")
 
-cffi_dir = os.path.dirname(cffi_opcode.__file__)
+cffi_dir = str(Path(os.path.dirname(__file__)).parent.parent / "src/cffi")
 
 r_macro = re.compile(r"#define \w+[(][^\n]*|#include [^\n]*")
 r_define = re.compile(r"(#define \w+) [^\n]*")
@@ -130,7 +132,7 @@ def parsex(input):
     return '  '.join(map(str_if_int, result))
 
 def parse_error(input, expected_msg, expected_location):
-    e = py.test.raises(ParseError, parse, input)
+    e = pytest.raises(ParseError, parse, input)
     assert e.value.args[0] == expected_msg
     assert e.value.args[1] == expected_location
 

@@ -1,4 +1,5 @@
-import sys, os, py
+import sys, os
+import pytest
 import subprocess
 import cffi
 from testing.udir import udir
@@ -40,11 +41,10 @@ class TestDist(object):
         tmp_home = mkdtemp()
         assert tmp_home != None, "cannot create temporary homedir"
         env['HOME'] = tmp_home
+        pathlist = sys.path[:]
         if cwd is None:
-            newpath = self.rootdir
-            if 'PYTHONPATH' in env:
-                newpath += os.pathsep + env['PYTHONPATH']
-            env['PYTHONPATH'] = newpath
+            pathlist.insert(0, self.rootdir)
+        env['PYTHONPATH'] = os.pathsep.join(pathlist)
         try:
             subprocess.check_call([self.executable] + args, cwd=cwd, env=env)
         finally:
@@ -56,7 +56,7 @@ class TestDist(object):
         try:
             import setuptools
         except ImportError:
-            py.test.skip("setuptools not found")
+            pytest.skip("setuptools not found")
         if os.path.exists(os.path.join(self.rootdir, 'setup.py')):
             self.run(['setup.py', 'egg_info'], cwd=self.rootdir)
         TestDist._setuptools_ready = True
@@ -115,7 +115,7 @@ class TestDist(object):
     def test_abi_emit_python_code_2(self):
         ffi = cffi.FFI()
         ffi.set_source("package_name_1.mymod", None)
-        py.test.raises(IOError, ffi.emit_python_code, 'unexisting/xyz.py')
+        pytest.raises(IOError, ffi.emit_python_code, 'unexisting/xyz.py')
 
     @from_outside
     def test_abi_emit_python_code_3(self):
@@ -162,7 +162,7 @@ class TestDist(object):
     def test_api_emit_c_code_2(self):
         ffi = cffi.FFI()
         ffi.set_source("package_name_1.mymod", "/*code would be here*/")
-        py.test.raises(IOError, ffi.emit_c_code, 'unexisting/xyz.c')
+        pytest.raises(IOError, ffi.emit_c_code, 'unexisting/xyz.c')
 
     @from_outside
     def test_api_emit_c_code_3(self):
@@ -289,13 +289,7 @@ class TestDist(object):
         with open("setup.py", "w") as f:
             f.write("""if 1:
                 # https://bugs.python.org/issue23246
-                import sys
-                if sys.platform == 'win32':
-                    try:
-                        import setuptools
-                    except ImportError:
-                        pass
-
+                import setuptools
                 import cffi
                 ffi = cffi.FFI()
                 ffi.set_source("pack1.mymod", "/*code would be here*/")
