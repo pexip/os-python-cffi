@@ -1,3 +1,50 @@
+python-cffi (1.17.1-2) unstable; urgency=medium
+
+  [ Helmut Grohne ]
+  * Fix FTCBFS: (Closes: #1087278)
+    + Move sphinx dependencies to B-D-I.
+    + Multiarchify python B-D.
+
+ -- Stefano Rivera <stefanor@debian.org>  Sun, 10 Nov 2024 14:29:20 -0800
+
+python-cffi (1.17.1-1) unstable; urgency=medium
+
+  * New upstream point-release.
+  * Bump Standards-Version to 4.7.0, no changes needed.
+  * Bump copyright years.
+
+ -- Stefano Rivera <stefanor@debian.org>  Thu, 05 Sep 2024 21:38:50 +0200
+
+python-cffi (1.17.0-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Stefano Rivera <stefanor@debian.org>  Mon, 12 Aug 2024 10:57:29 +0200
+
+python-cffi (1.16.0-2) unstable; urgency=medium
+
+  * Patch: Use virtualenv's bundled setuptools and wheel on Python 3.12.
+    (Closes: #1055337)
+
+ -- Stefano Rivera <stefanor@debian.org>  Sat, 04 Nov 2023 20:02:00 +0200
+
+python-cffi (1.16.0-1) unstable; urgency=medium
+
+  * New upstream release.
+  * Drop all patches, superseded upstream.
+  * Bump copyright years.
+  * Upstream reorganised the source tree, update our packaging.
+  * Upstream moved to GitHub, update metadata.
+  * Drop debian/python-cffi-backend.substvars that we've accidentally been
+    including in the source package.
+  * Explicitly build egg-info before running tests, so the setuptools
+    extension can be discovered.
+  * Build with pybuild-plugin-pyproject.
+  * Improve cleaning.
+  * Correct a path typo in copyright.
+
+ -- Stefano Rivera <stefanor@debian.org>  Mon, 02 Oct 2023 18:16:49 +0200
+
 python-cffi (1.15.1-5++pexip24u4) pexip-bookworm; urgency=medium
 
   * New versioning scheme

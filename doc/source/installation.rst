@@ -17,9 +17,7 @@ platform as well as on Windows 32 and 64.  (It relies occasionally on
 libffi, so it depends on libffi being bug-free; this may not be fully
 the case on some of the more exotic platforms.)
 
-CFFI supports CPython 2.7, 3.x (tested with 3.6 to 3.9); and is
-distributed with PyPy (CFFI 1.0 is distributed with and requires
-PyPy 2.6).
+CFFI is tested with CPython 3.8-3.13.
 
 The core speed of CFFI is better than ctypes, with import times being
 either lower if you use the post-1.0 features, or much higher if you
@@ -31,7 +29,7 @@ libraries on PyPy.
 
 Requirements:
 
-* CPython 2.7 or 3.x, or PyPy (PyPy 2.0 for the earliest
+* CPython 3.8+, or PyPy (PyPy 2.0 for the earliest
   versions of CFFI; or PyPy 2.6 for CFFI 1.0).
 
 * in some cases you need to be able to compile C extension modules.
@@ -44,34 +42,22 @@ Requirements:
 * pycparser >= 2.06: https://github.com/eliben/pycparser (automatically
   tracked by ``pip install cffi``).
 
-* `py.test`_ is needed to run the tests of CFFI itself.
+* `pytest`_ is needed to run the tests of CFFI itself.
 
-.. _`py.test`: http://pypi.python.org/pypi/pytest
+.. _`pytest`: http://pypi.python.org/pypi/pytest
 
 Download and Installation:
 
 * https://pypi.python.org/pypi/cffi
 
-* Checksums of the "source" package version 1.15.1:
+* Or grab the most current version from `GitHub`_:
+  ``git clone https://github.com/python-cffi/cffi``
 
-   - MD5: ...
-
-   - SHA1: ...
-
-   - SHA256: ...
-
-* Or grab the most current version from the `Heptapod page`_:
-  ``hg clone https://foss.heptapod.net/pypy/cffi``
-
-* ``python setup.py install`` or ``python setup_base.py install``
-  (should work out of the box on Linux or Windows; see below for
-  `MacOS X`_.)
-
-* running the tests: ``py.test  c/  testing/`` (if you didn't
+* running the tests: ``pytest  c/  testing/`` (if you didn't
   install cffi yet, you need first ``python setup_base.py build_ext -f
   -i``)
 
-.. _`Heptapod page`: https://foss.heptapod.net/pypy/cffi
+.. _`GitHub project home`: https://github.com/python-cffi/cffi
 
 Demos:
 
@@ -82,9 +68,9 @@ Demos:
   ultimate reference is given by the tests, notably
   `testing/cffi1/test_verify1.py`_ and `testing/cffi0/backend_tests.py`_.
 
-.. _`demo`: https://foss.heptapod.net/pypy/cffi/-/tree/branch/default/demo
-.. _`testing/cffi1/test_verify1.py`: https://foss.heptapod.net/pypy/cffi/-/blob/branch/default/testing/cffi1/test_verify1.py
-.. _`testing/cffi0/backend_tests.py`: https://foss.heptapod.net/pypy/cffi/-/blob/branch/default/testing/cffi0/backend_tests.py
+.. _`demo`: https://github.com/python-cffi/cffi/blob/main/demo
+.. _`testing/cffi1/test_verify1.py`: https://github.com/python-cffi/cffi/blob/main/testing/cffi1/test_verify1.py
+.. _`testing/cffi0/backend_tests.py`: https://github.com/python-cffi/cffi/blob/main/testing/cffi0/backend_tests.py
 
 
 Platform-specific instructions
@@ -101,7 +87,7 @@ Modern Linuxes work out of the box thanks to ``pkg-config``.  Here are some
 MacOS X
 +++++++
 
-**Homebrew** (Thanks David Griffin for this)
+**Homebrew** (Thanks David Griffin and Mark Keller for this)
 
 1) Install homebrew: http://brew.sh
 
@@ -110,7 +96,9 @@ MacOS X
 ::
 
     brew install pkg-config libffi
-    PKG_CONFIG_PATH=/usr/local/opt/libffi/lib/pkgconfig pip install cffi
+    PKG_CONFIG_PATH=$(brew --prefix libffi)/lib/pkgconfig pip install --no-binary cffi cffi
+
+(the ``--no-binary cffi`` might be needed or not.)
 
 
 Alternatively, **on OS/X 10.6** (Thanks Juraj Sukop for this)
@@ -146,28 +134,9 @@ problem applies whenever you want to run compile() to build a dll with
 this specific compiler suite download.
 ``import setuptools`` might help, but YMMV
 
-For Python 3.4 and beyond:
-https://www.visualstudio.com/en-us/downloads/visual-studio-2015-ctp-vs
-
-
-Linux and OS/X: UCS2 versus UCS4
-++++++++++++++++++++++++++++++++
-
-This is about getting an ImportError about ``_cffi_backend.so`` with a
-message like ``Symbol not found: _PyUnicodeUCS2_AsASCIIString``.  This
-error occurs in Python 2 as soon as you mix "ucs2" and "ucs4" builds of
-Python.  It means that you are now running a Python compiled with
-"ucs4", but the extension module ``_cffi_backend.so`` was compiled by a
-different Python: one that was running "ucs2".  (If the opposite problem
-occurs, you get an error about ``_PyUnicodeUCS4_AsASCIIString``
-instead.)
-
-If you are using ``pyenv``, then see
-https://github.com/yyuu/pyenv/issues/257.
-
 More generally, the solution that should always work is to download the
 sources of CFFI (instead of a prebuilt binary) and make sure that you
-build it with the same version of Python than the one that will use it.
+build it with the same version of Python that will use it.
 For example, with virtualenv:
 
 * ``virtualenv ~/venv``

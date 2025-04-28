@@ -1,14 +1,25 @@
+[![GitHub Actions Status](https://github.com/python-cffi/cffi/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/python-cffi/cffi/actions/workflows/ci.yaml?query=branch%3Amain++)
+[![PyPI version](https://img.shields.io/pypi/v/cffi.svg)](https://pypi.org/project/cffi)
+[![Read the Docs](https://img.shields.io/badge/docs-latest-blue.svg)][Documentation]
+
+
 CFFI
 ====
 
 Foreign Function Interface for Python calling C code.
-Please see the [Documentation](http://cffi.readthedocs.org/) or uncompiled
-in the doc/ subdirectory.
+
+Please see the [Documentation] or uncompiled in the `doc/` subdirectory.
 
 Download
 --------
 
-[Download page](https://foss.heptapod.net/pypy/cffi/-/tags)
+[Download page](https://github.com/python-cffi/cffi/releases)
+
+Source Code
+-----------
+
+Source code is publicly available on
+[GitHub](https://github.com/python-cffi/cffi).
 
 Contact
 -------
@@ -18,13 +29,11 @@ Contact
 Testing/development tips
 ------------------------
 
-To run tests under CPython, run::
+To run tests under CPython, run the following in the source root directory:
 
-    pip install pytest     # if you don't have py.test already
-    pip install pycparser
-    python setup.py build_ext -f -i
-    py.test c/ testing/
+    pip install pytest
+    pip install -e .  # editable install of CFFI for local development
+    pytest c/ testing/
 
-If you run in another directory (either the tests or another program),
-you should use the environment variable ``PYTHONPATH=/path`` to point
-to the location that contains the ``_cffi_backend.so`` just compiled.
+
+[Documentation]: http://cffi.readthedocs.org/

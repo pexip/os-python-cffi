@@ -1,4 +1,5 @@
-*.egg-info/*
+.pytest_cache/
 debian/*.pydist
 doc/build/
-.pytest_cache/
+src/*.egg-info/
+testing/cffi0/snippets/distutils_module/__pycache__/
